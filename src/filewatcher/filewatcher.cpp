@@ -60,7 +60,14 @@ void watch_directory(const std::string& directory_to_watch) {
     char buffer[1024];
     DWORD bytesReturned;
     OVERLAPPED overlapped = {};
+    overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
+    if (overlapped.hEvent == NULL) {
+        std::cerr << "CreateEvent failed (" << GetLastError() << ")" << std::endl;
+        CloseHandle(hDir);
+        return;
+    }
+    
     while (true) {
         if (ReadDirectoryChangesW(
             hDir,
@@ -83,9 +90,11 @@ void watch_directory(const std::string& directory_to_watch) {
             } while (pNotify->NextEntryOffset);
 
             compile_dll();
+            ResetEvent(overlapped.hEvent);
         }
     }
 
+    CloseHandle(overlapped.hEvent);
     CloseHandle(hDir);
 }
 

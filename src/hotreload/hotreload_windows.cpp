@@ -20,15 +20,16 @@ void unloadLibrary() {
 }
 
 InitFunc getInitFunction() {
-    return (InitFunc)GetProcAddress(hLib, "init");
+    std::cout << "get init\n";
+    return (InitFunc)GetProcAddress(hLib, "client_init");
 }
 
 UpdateFunc getUpdateFunction() {
-    return (UpdateFunc)GetProcAddress(hLib, "update");
+    return (UpdateFunc)GetProcAddress(hLib, "client_update");
 }
 
 ShutdownFunc getShutdownFunction() {
-    return (ShutdownFunc)GetProcAddress(hLib, "shutdown");
+    return (ShutdownFunc)GetProcAddress(hLib, "client_shutdown");
 }
 
 std::string getCurrentWorkingDirectory() {

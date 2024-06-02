@@ -1,4 +1,4 @@
-# GLFW binaries for 64-bit Windows
+k# GLFW binaries for 64-bit Windows
 
 This archive contains documentation, headers, pre-compiled static libraries,
 import libraries and DLLs for GLFW 3.4.
