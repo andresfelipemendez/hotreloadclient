@@ -16,9 +16,11 @@ opengl32.lib ^
 gdi32.lib ^
 user32.lib ^
 shell32.lib ^
+/Zi /Fd:build\client_lib.pdb ^
 /link ^
 /MACHINE:X64 ^
-/NODEFAULTLIB:libcmt.lib
+/NODEFAULTLIB:libcmt.lib ^
+/DEBUG
 
 if errorlevel 1 goto end
 :end

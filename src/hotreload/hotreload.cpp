@@ -2,6 +2,8 @@
 #include <entt/entt.hpp>
 #include <string>
 #include <filesystem>
+#include <thread>
+#include <atomic>
 #include "../client/client.h"
 #include "hotreload.h"
 
@@ -9,10 +11,23 @@
 #define HOTRELOAD_EVENT_NAME "Global\\ReloadEvent"
 
 namespace fs = std::filesystem;
+std::atomic<bool> reloadFlag(false);
 
+void waitForReloadSignal(HANDLE hEvent) {
+    while (true) {
+        DWORD dwWaitResult = WaitForSingleObject(hEvent, INFINITE);
 
-void reload_dll() {
-    
+        switch (dwWaitResult) {
+            case WAIT_OBJECT_0:
+                std::cout << "Event signaled. Reloading DLL..." << std::endl;
+                reloadFlag.store(true);
+                ResetEvent(hEvent);
+                break;
+            default:
+                std::cerr << "WaitForSingleObject failed (" << GetLastError() << ")" << std::endl;
+                return;
+        }
+    }
 }
 
 int main(int argc, char* argv[]) 
@@ -61,33 +76,37 @@ int main(int argc, char* argv[])
         std::cerr << "Unable to initialize the client library" << std::endl;
     }
 
+    std::thread signalThread(waitForReloadSignal, hEvent);
     while (true) {
-        DWORD dwWaitResult = WaitForSingleObject(hEvent, INFINITE);
-
-        switch (dwWaitResult) {
-            case WAIT_OBJECT_0:
-                std::cout << "Event signaled. Reloading DLL..." << std::endl;
-                
-                unloadLibrary();
-
-                init = getInitFunction();
-                update = getUpdateFunction();
-                shutdown = getShutdownFunction();
-
-                if (!init || !update || !shutdown) {
-                    std::cerr << "Unable to find necessary functions in the library" << std::endl;
-                    unloadLibrary();
-                    return -1;
-                }
-
-                ResetEvent(hEvent);
-                break;
-            default:
-                std::cerr << "WaitForSingleObject failed (" << GetLastError() << ")" << std::endl;
-                return 1;
-        }
 
         update(&clientData, &registry);   
+
+        if (reloadFlag.load()) {
+            reloadFlag.store(false);
+
+            unloadLibrary();
+            fs::copy(originalDLLpath, copyDLLpath, fs::copy_options::overwrite_existing);
+
+            if (!loadLibrary(copyDLLpath)) {
+                std::cerr << "Failed to reload the library" << std::endl;
+                return -1;
+            }
+
+            init = getInitFunction();
+            update = getUpdateFunction();
+            shutdown = getShutdownFunction();
+
+            if (!init || !update || !shutdown) {
+                std::cerr << "Unable to find necessary functions in the reloaded library" << std::endl;
+                unloadLibrary();
+                return -1;
+            }
+
+            if (!init(&clientData, &registry)) {
+                std::cerr << "Unable to initialize the reloaded client library" << std::endl;
+            }
+        }
+
     }
 
     shutdown(&clientData);

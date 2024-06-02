@@ -16,6 +16,6 @@ extern "C" {
 
 struct ClientData{
     class GLFWwindow* window;
-    unsigned int vertex_buffer, vertex_shader, fragment_shader, program;
-    int mvp_location, vpos_location, vcol_location;
+    unsigned int vertex_buffer, vertex_shader, fragment_shader, program,VAO;
+    int mvp_location, vpos_location = 0, vcol_location;
 };
