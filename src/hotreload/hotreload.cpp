@@ -2,8 +2,8 @@
 #include <entt/entt.hpp>
 #include <string>
 #include <filesystem>
-#include "../game/Game.h"
-#include "hot_reload.h"
+#include "../client/client.h"
+#include "hotreload.h"
 
 namespace fs = std::filesystem;
 
@@ -39,13 +39,13 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    GameData gameData;
+    ClientData clientData;
     entt::registry registry;
 
-    if (init(&gameData, &registry)) {
-        update(&gameData, &registry);
+    if (init(&clientData, &registry)) {
+        update(&clientData, &registry);
     }
-    shutdown(&gameData);
+    shutdown(&clientData);
 
     unloadLibrary();
 

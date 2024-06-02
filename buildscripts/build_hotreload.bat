@@ -1,3 +1,6 @@
 @echo off
-setlocal
-cl /EHsc /Fe:build\hotreload.exe src\client\hotreload.cpp ws2_32.lib
+if not exist ..\build mkdir ..\build
+cl /EHsc /Fe:build\hotreload.exe /Fo..\build\ /Ilib\entt\include src\hotreload\hotreload.cpp src\hotreload\hotreload_windows.cpp ws2_32.lib /std:c++17
+if errorlevel 1 goto end
+:end
+exit /b %errorlevel%

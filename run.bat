@@ -1,4 +1,7 @@
 @echo off
+
+if not exist build mkdir build
+
 REM Build the hotreload executable
 call buildscripts\build_hotreload.bat
 if errorlevel 1 goto end
@@ -18,5 +21,5 @@ REM Run the filewatcher
 start build\filewatcher.exe
 
 :end
-pause
+exit
 
