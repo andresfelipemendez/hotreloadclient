@@ -1,15 +1,15 @@
 #include "client.h"
 #include <iostream>
 #include <string>
-
-
- 
 #include "linmath.h"
-
 #include <glad/glad.h>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 #define PORT 8080
 #define BUFFER_SIZE 1024
@@ -73,6 +73,17 @@ bool client_init(ClientData* clientData, void* registry){
         return false;
     }
 
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)clientData->window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+    ImGui_ImplOpenGL3_Init();
+
     glGenVertexArrays(1, &(clientData->VAO));  
     glBindVertexArray(clientData->VAO);
 
@@ -115,7 +126,6 @@ bool client_init(ClientData* clientData, void* registry){
         return false;
     }
 
-
     glUseProgram(clientData->program);
 
     clientData->mvp_location = glGetUniformLocation(clientData->program, "MVP");
@@ -124,13 +134,19 @@ bool client_init(ClientData* clientData, void* registry){
  
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0); 
-   
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f); // Set a background color
+   // Set a background color
     return true;
 }
 
 void client_update(ClientData* clientData, void* registry)
 {
+
+
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    ImGui::ShowDemoWindow();
+
     float ratio;
     int width, height;
     mat4x4 m, p, mvp;
@@ -151,12 +167,19 @@ void client_update(ClientData* clientData, void* registry)
     glUniformMatrix4fv(clientData->mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
     glfwSwapBuffers(clientData->window);
     glfwPollEvents();
 }
 
 void client_shutdown(ClientData* clientData)
 {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
     glfwDestroyWindow(clientData->window);
     glfwTerminate();
 }

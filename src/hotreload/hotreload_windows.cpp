@@ -20,12 +20,10 @@ void unloadLibrary() {
 }
 
 InitFunc getInitFunction() {
-    
     return (InitFunc)GetProcAddress(hLib, "client_init");
 }
 
 UpdateFunc getUpdateFunction() {
-    std::cout << "get update\n";
     return (UpdateFunc)GetProcAddress(hLib, "client_update");
 }
 
