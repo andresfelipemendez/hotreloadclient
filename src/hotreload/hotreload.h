@@ -3,9 +3,9 @@
 
 #include <string>
 
-typedef bool (*InitFunc)(void*, void*);
-typedef void (*UpdateFunc)(void*, void*);
-typedef void (*ShutdownFunc)(void*);
+typedef bool (*InitFunc)(struct ClientData*, void*);
+typedef void (*UpdateFunc)(struct ClientData*, void*);
+typedef void (*ShutdownFunc)(struct ClientData*);
 
 #ifdef _WIN32
 #include <Windows.h>
