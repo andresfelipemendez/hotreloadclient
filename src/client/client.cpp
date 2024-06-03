@@ -77,6 +77,17 @@ bool client_init(ClientData* clientData, void* registry)
         return false;
     }
 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    ImGui::SetNextWindowSize(io.DisplaySize);
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+
+    ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)clientData->window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+    ImGui_ImplOpenGL3_Init();
+
     glGenVertexArrays(1, &(clientData->VAO));  
     glBindVertexArray(clientData->VAO);
 
@@ -132,7 +143,7 @@ bool client_init(ClientData* clientData, void* registry)
     return true;
 }
 
-void client_re_init(ClientData* clientData, void* registry) {
+bool client_re_init(ClientData* clientData, void* registry) {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
@@ -148,6 +159,7 @@ void client_re_init(ClientData* clientData, void* registry) {
     ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)clientData->window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
     ImGui_ImplOpenGL3_Init();
 
+    std::cout << "re initialized\n";
     return true;
 }
 
@@ -176,7 +188,7 @@ void client_update(ClientData* clientData, void* registry)
     #endif
 
         ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
+        
         ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 
         ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
@@ -187,7 +199,6 @@ void client_update(ClientData* clientData, void* registry)
         ImGui::SameLine();
         ImGui::Text("counter = %d", counter);
 
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
         ImGui::End();
     }
 
