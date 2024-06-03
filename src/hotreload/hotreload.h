@@ -4,6 +4,7 @@
 #include <string>
 
 typedef bool (*InitFunc)(struct ClientData*, void*);
+typedef bool (*ReInitFunc)(struct ClientData*, void*);
 typedef void (*UpdateFunc)(struct ClientData*, void*);
 typedef void (*ShutdownFunc)(struct ClientData*);
 
@@ -20,6 +21,7 @@ typedef void (*ShutdownFunc)(struct ClientData*);
 bool loadLibrary(const std::string& libName);
 void unloadLibrary();
 InitFunc getInitFunction();
+ReInitFunc getReInitFunction();
 UpdateFunc getUpdateFunction();
 ShutdownFunc getShutdownFunction();
 std::string getCurrentWorkingDirectory();

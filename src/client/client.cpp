@@ -47,8 +47,12 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-bool client_init(ClientData* clientData, void* registry){
-
+bool client_init(ClientData* clientData, void* registry)
+{
+    if (clientData->initialized) {
+        std::cout << "already initialized returning\n";
+        return true;
+    }
 
     glfwSetErrorCallback(error_callback);
 
@@ -72,19 +76,6 @@ bool client_init(ClientData* clientData, void* registry){
         std::cerr << "Failed to initialize GLAD" << std::endl;
         return false;
     }
-
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    ImGui::SetNextWindowSize(io.DisplaySize);
-    ImGui::SetNextWindowPos(ImVec2(0, 0));
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)clientData->window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
-    ImGui_ImplOpenGL3_Init();
 
     glGenVertexArrays(1, &(clientData->VAO));  
     glBindVertexArray(clientData->VAO);
@@ -136,7 +127,27 @@ bool client_init(ClientData* clientData, void* registry){
  
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0); 
-   // Set a background color
+
+    clientData->initialized = true;
+    return true;
+}
+
+void client_re_init(ClientData* clientData, void* registry) {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    ImGui::SetNextWindowSize(io.DisplaySize);
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+
+    ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)clientData->window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+    ImGui_ImplOpenGL3_Init();
+
     return true;
 }
 
@@ -144,8 +155,7 @@ void client_update(ClientData* clientData, void* registry)
 {
     ImGuiIO& io = ImGui::GetIO();
 
-
-    static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    static ImVec4 clear_color = ImVec4(0.45f, 0.33f, 0.60f, 1.00f);
     
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -168,7 +178,6 @@ void client_update(ClientData* clientData, void* registry)
         ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
         ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-
 
         ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
         ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color

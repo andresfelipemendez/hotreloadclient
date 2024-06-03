@@ -18,7 +18,7 @@ REM Run the hotreload executable
 start build\hotreload.exe
 
 REM Run the filewatcher
-start build\filewatcher.exe
+build\filewatcher.exe
 
 :end
 exit

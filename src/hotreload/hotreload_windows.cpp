@@ -23,6 +23,10 @@ InitFunc getInitFunction() {
     return (InitFunc)GetProcAddress(hLib, "client_init");
 }
 
+ReInitFunc getReInitFunction() {
+    return (InitFunc)GetProcAddress(hLib, "client_re_init");
+}
+
 UpdateFunc getUpdateFunction() {
     return (UpdateFunc)GetProcAddress(hLib, "client_update");
 }

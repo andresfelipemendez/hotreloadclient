@@ -3,25 +3,37 @@
 #include <string>
 #include <filesystem>
 #include <thread>
-#define BUILD_LIB_SCRIPT "build_lib.bat"
-#define BUILD_TESTS_SCRIPT "build_tests.bat"
+#define BUILD_LIB_SCRIPT "buildscripts\\build_client_lib.bat"
+#define BUILD_TESTS_SCRIPT "buildscripts\\build_tests.bat"
 #define HOTRELOAD_EVENT_NAME "Global\\ReloadEvent"
 #define TESTS_EVENT_NAME "Global\\TestsEvent"
 
+HANDLE get_or_create_event(const std::string& event_name) {
+    HANDLE hEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, event_name.c_str());
+    if (!hEvent) {
+        hEvent = CreateEvent(NULL, TRUE, FALSE, event_name.c_str());
+        if (!hEvent) {
+            std::cerr << "Failed to create event " << event_name << " (" << GetLastError() << ")" << std::endl;
+        }
+    }
+    return hEvent;
+}
+
 void compile_dll() {
+    HANDLE hHotReloadEvent = get_or_create_event(HOTRELOAD_EVENT_NAME);
+    HANDLE hTestsEvent = get_or_create_event(TESTS_EVENT_NAME);
+
     // Call the batch script to compile the DLL
     if (system(BUILD_LIB_SCRIPT) != 0) {
         std::cout << "Lib Compilation failed." << std::endl;
     } else {
         std::cout << "Lib Compilation successful." << std::endl;
 
-        HANDLE hEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, HOTRELOAD_EVENT_NAME);
-        if (hEvent) {
-            SetEvent(hEvent);
-            CloseHandle(hEvent);
+        if (hHotReloadEvent) {
+            SetEvent(hHotReloadEvent);
             std::cout << "Signal sent to hotreload." << std::endl;
         } else {
-            std::cerr << "Failed to open hotreload event (" << GetLastError() << ")" << std::endl;
+            std::cerr << "Failed to signal hotreload event" << std::endl;
         }
     }
 
@@ -30,14 +42,20 @@ void compile_dll() {
     } else {
         std::cout << "Tests Compilation successful." << std::endl;
 
-        HANDLE hEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, TESTS_EVENT_NAME);
-        if (hEvent) {
-            SetEvent(hEvent);
-            CloseHandle(hEvent);
-            std::cout << "Signal sent to tests." << std::endl;
+        // Run tests.exe after successful compilation
+        if (system("build\\tests.exe") != 0) {
+            std::cout << "Tests execution failed." << std::endl;
         } else {
-            std::cerr << "Failed to open tests event (" << GetLastError() << ")" << std::endl;
+            std::cout << "Tests execution successful." << std::endl;
         }
+    }
+
+    if (hHotReloadEvent) {
+        CloseHandle(hHotReloadEvent);
+    }
+
+    if (hTestsEvent) {
+        CloseHandle(hTestsEvent);
     }
 }
 
@@ -67,7 +85,7 @@ void watch_directory(const std::string& directory_to_watch) {
         CloseHandle(hDir);
         return;
     }
-    
+
     while (true) {
         if (ReadDirectoryChangesW(
             hDir,
@@ -99,14 +117,13 @@ void watch_directory(const std::string& directory_to_watch) {
 }
 
 int main() {
-    const std::string directories_to_watch[] = { "../src", "../tests" };
+    const std::string directories_to_watch[] = { "src", "tests" };
 
     for (const auto& dir : directories_to_watch) {
         std::thread watcher(watch_directory, dir);
         watcher.detach();
     }
 
-    // Keep the main thread alive indefinitely
     while (true) {
         Sleep(1000);
     }

@@ -7,7 +7,6 @@
 #include "../client/client.h"
 #include "hotreload.h"
 
-
 #define HOTRELOAD_EVENT_NAME "Global\\ReloadEvent"
 
 namespace fs = std::filesystem;
@@ -65,6 +64,7 @@ int main(int argc, char* argv[])
     InitFunc init = getInitFunction();
     UpdateFunc update = getUpdateFunction();
     ShutdownFunc shutdown = getShutdownFunction();
+    ReInitFunc reinit = getReInitFunction();
 
     if (!init || !update || !shutdown) {
         std::cerr << "Unable to find necessary functions in the library" << std::endl;
@@ -77,24 +77,29 @@ int main(int argc, char* argv[])
     }
 
     std::thread signalThread(waitForReloadSignal, hEvent);
-    while (true) {
-
-        update(&clientData, &registry);   
-
-        if (reloadFlag.load()) {
+    while (true) 
+    {
+        if (reloadFlag.load()) 
+        {
             reloadFlag.store(false);
+            
+            std::cout << "Reload DLL" << std::endl;
 
             unloadLibrary();
+            
+            std::cout << "unloadLibrary DLL" << std::endl;
             fs::copy(originalDLLpath, copyDLLpath, fs::copy_options::overwrite_existing);
 
             if (!loadLibrary(copyDLLpath)) {
                 std::cerr << "Failed to reload the library" << std::endl;
                 return -1;
             }
-
+            
+            std::cout << "loadLibrary DLL" << std::endl;
             init = getInitFunction();
             update = getUpdateFunction();
             shutdown = getShutdownFunction();
+            reinit = getReInitFunction();
 
             if (!init || !update || !shutdown) {
                 std::cerr << "Unable to find necessary functions in the reloaded library" << std::endl;
@@ -102,11 +107,12 @@ int main(int argc, char* argv[])
                 return -1;
             }
 
-            if (!init(&clientData, &registry)) {
-                std::cerr << "Unable to initialize the reloaded client library" << std::endl;
+            if (!reinit(&clientData, &registry)) {
+                 std::cerr << "Unable to initialize the reloaded client library" << std::endl;
             }
         }
 
+        update(&clientData, &registry);   
     }
 
     shutdown(&clientData);
